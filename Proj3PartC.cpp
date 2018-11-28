@@ -136,14 +136,7 @@ int blocksize =1;
 RGBApixel ** pixmap2d;
 int rows = Height;
 int columns = Width;
-int depth = 2;
-
-//Draws the pixmap.
-void drawScreen() {
-	glRasterPos2i(0, 0);
-	glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, pixmap2d[0]);
-	glFlush();
-}
+int depth = 3;
 
 //Calculates hits and pushes them into vector which is later returned.
 vector<float> hit(Point p, Vector v) {
@@ -194,7 +187,7 @@ Vector shade(Point eye, Vector dir, float th, bool hitFound, int objIndex, Vecto
 			Vector L;
 			Vector N = hitPoint - Point(objects[objIndex].x, objects[objIndex].y, objects[objIndex].z);
 			N.normalize();
-			for (int j = 1; j < lights.size(); j++) {
+			for (unsigned int j = 1; j < lights.size(); j++) {
 				if (lights[j].type != 3 /*&& lights[j].type != 2*/) {
 					L = lights[j].position - hitPoint;
 				}
@@ -237,7 +230,7 @@ Vector shade(Point eye, Vector dir, float th, bool hitFound, int objIndex, Vecto
 			Vector refl = dir - temp * N;
 			float thRefl = FLT_MAX;
 			int objIndexRefl = -1;
-			for (int i = 0; i < objects.size(); i++) {
+			for (unsigned int i = 0; i < objects.size(); i++) {
 				Ray inverse(objects[i].inverse * hitPointCorrected, objects[i].inverse*refl);
 				vector<float> hits(hit(inverse.eye, inverse.dir));
 				if (hits.size() > 0) {
@@ -267,30 +260,8 @@ Vector shade(Point eye, Vector dir, float th, bool hitFound, int objIndex, Vecto
 	}	
 	return total;
 }
-void myKeyboard(unsigned char key, int x, int y) {
-	switch (key) {
-	case '+':
-		if (depth < 3) {
-			depth++;
-		}
-		cout << "+ Recorded!" << endl;
-		break;
-	case '-':
-		if (depth > 1) {
-			depth--;
-		}
-		cout << "- Recorded!" << endl;
-		break;
-	default:
-		break;
-	}
-	glutPostRedisplay();
-}
 
-// Creating the Sphere objects and the vector u, v, and n is done in the main. 
-// We set the pixel's color values by iterating through each pixel adn finding hits with all objects. 
-// The pixel is colored according to the first object hit.
-int main() {
+void mainFunction() {
 	int row, col;
 	vector<Sphere> objects;
 	objects.push_back(Sphere(0.125, -0.25, -1, 0.125, 0.5, 0.5, 0.5, 1.0, 0.7, 0.7, 0.7, 1.0, 0.9, 0.9, 0.9, 1.0, 3.0));
@@ -304,9 +275,9 @@ int main() {
 	lights.push_back(Light(2, -1, 0, 1, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, 1, 0.40, 0.40, 0.70, 1, 30, 0.5)); //spotlight
 	lights.push_back(Light(3, 0, 0, 0, -400, 692, 0, 0, 0, 0, 1, 0.80, 0.80, 0.60, 1, 0, 0, 0, 1, 0, 0)); //directional light
 
-	Vector n(0,0,1);
-	Vector v(0,1,0);
-	Vector u(1,0,0);
+	Vector n(0, 0, 1);
+	Vector v(0, 1, 0);
+	Vector u(1, 0, 0);
 	Point eye(0, 0, 1);
 	Vector background(0, 0, 0, 1);
 	pixmap2d = new RGBApixel*[Height];
@@ -314,23 +285,23 @@ int main() {
 	for (int i = 1; i < Height; i++) {
 		pixmap2d[i] = pixmap2d[i - 1] + Width;
 	}
-	for (row = blocksize-1; row < Height; row+=blocksize) {
-		for (col = blocksize-1; col < Width; col+=blocksize) {
+	for (row = blocksize - 1; row < Height; row += blocksize) {
+		for (col = blocksize - 1; col < Width; col += blocksize) {
 			bool hitFound = false;
 			int level = 0;
 			int objIndex = -1;
 			float th = FLT_MAX;
 			float k = -1;
-			float l = 0.5* ((2 * (float)col / (float) columns)-1);
-			float m = 0.4* ((2 * (float)row / (float) rows)-1);
+			float l = 0.5* ((2 * (float)col / (float)columns) - 1);
+			float m = 0.4* ((2 * (float)row / (float)rows) - 1);
 			Vector dir;
 			dir = n * k + u * l + v * m;
-			for (int i = 0; i < objects.size(); i++) {
-				Ray inverse (objects[i].inverse * eye, objects[i].inverse*dir);
+			for (unsigned int i = 0; i < objects.size(); i++) {
+				Ray inverse(objects[i].inverse * eye, objects[i].inverse*dir);
 				//cout << "Inverted ray for row: " << row << " and col: " << col << " and object: " << i << " is:" << endl;
 				//inverse.eye.Print();
 				//inverse.dir.Print();
-				vector<float> hits (hit(inverse.eye, inverse.dir));
+				vector<float> hits(hit(inverse.eye, inverse.dir));
 				if (hits.size() > 0) {
 					//cout << "Inverted ray for row: " << row << " and col: " << col << " and object: " << i << " is:" << endl;
 					hitFound = true;
@@ -345,7 +316,7 @@ int main() {
 				}
 			}
 			Vector total = shade(eye, dir, th, hitFound, objIndex, background, objects, lights, level, depth);
-			
+
 			//Add reflected ray component.
 
 			for (int i = row - blocksize + 1; i <= row; i++) {
@@ -356,7 +327,39 @@ int main() {
 			}
 		}
 	}
-
+	//cout << "Executed main func" << endl;
+}
+//Draws the pixmap.
+void myKeyboard(unsigned char key, int x, int y) {
+	switch (key) {
+	case '+':
+		if (depth < 3) {
+			depth++;
+		}
+		//cout << "+ Recorded!" << endl;
+		break;
+	case '-':
+		if (depth > 1) {
+			depth--;
+		}
+		//cout << "- Recorded!" << endl;
+		break;
+	default:
+		break;
+	}
+	mainFunction();
+	glutPostRedisplay();
+}
+void drawScreen() {
+	glRasterPos2i(0, 0);
+	glDrawPixels(Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, pixmap2d[0]);
+	glFlush();
+}
+// Creating the Sphere objects and the vector u, v, and n is done in the main. 
+// We set the pixel's color values by iterating through each pixel adn finding hits with all objects. 
+// The pixel is colored according to the first object hit.
+int main() {
+	mainFunction();
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGBA);
 	glutInitWindowSize(Width, Height);
 	glutCreateWindow("Raycaster");
@@ -365,13 +368,11 @@ int main() {
 	gluOrtho2D(0, Width, 0, Height);
 	glMatrixMode(GL_MODELVIEW); // position and aim the camera	
 	glLoadIdentity();
-	gluLookAt(0, 0, 1, 0, 0, 0, 0, 1, 0);
-	
+	gluLookAt(0, 0, 1, 0, 0, 0, 0, 1, 0);	
 	// register display callback routine
 	glutDisplayFunc(drawScreen);
 	glViewport(0, 0, Width, Height);
 	glutKeyboardFunc(myKeyboard);
 	glutMainLoop();
-	system("pause");
 	return 0;
 }
